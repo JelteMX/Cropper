@@ -39,7 +39,8 @@ define([
     "dojo/text!Cropper/widget/template/Cropper.html",
     "Cropper/lib/cropper",
     "Cropper/lib/canvas-to-blob"
-], function(declare, _WidgetBase, _TemplatedMixin, dom, dojoDom, dojoProp, dojoGeometry, dojoClass, dojoStyle, domAttr, dojoConstruct, dojoArray, lang, dojoText, dojoHtml, dojoEvent, _jQuery, widgetTemplate) {
+], function(declare, _WidgetBase, _TemplatedMixin, dom, dojoDom, dojoProp, dojoGeometry, dojoClass, dojoStyle, domAttr, dojoConstruct, dojoArray, lang, dojoText, dojoHtml, dojoEvent, _jQuery, widgetTemplate, cropper, dataURLtoBlob) {
+
     "use strict";
 
     var $ = _jQuery.noConflict(true),
@@ -51,7 +52,12 @@ define([
         templateString: widgetTemplate,
 
         // Parameters configured in the Modeler.
-        messageString: "",
+        targetWidth: 1000,
+        targetHeight: 1000,
+        targetColor: "#FFFFFF",
+        lockTargetRatio: false,
+        showPreview: true,
+        showInfo: true,
 
         // DOM Nodes
         imageNode: null,
@@ -61,6 +67,7 @@ define([
         nodeDataY: null,
         nodeDataWidth: null,
         nodeDataHeight: null,
+        nodeInfoResize: null,
         nodeDataRotate: null,
         nodeDataScaleX: null,
         nodeDataScaleY: null,
@@ -72,19 +79,56 @@ define([
         _setup: false,
         _imageName: null,
 
+        _targetRatio: null,
+
         constructor: function() {
             this._handles = [];
         },
 
         postCreate: function() {
             logger.debug(this.id + ".postCreate");
+
+            if (this.targetColor === "" || this.targetColor.indexOf("#") !== 0) {
+                this.targetColor = "#FFFFFF";
+            }
+
+            if (this.lockTargetRatio) {
+                var w = this.targetWidth,
+                    h = this.targetHeight;
+
+                if (w <= 0) {
+                    w = h > 0 ? h : 1000;
+                }
+                if (h <= 0) {
+                    h = w > 0 ? w : 1000;
+                }
+                this.targetWidth = w;
+                this.targetHeight = h;
+                this._targetRatio = w/h;
+
+                dojoClass.remove(this.nodeInfoResize, "hidden");
+                dojoHtml.set(this.nodeInfoResizeText, "Width/height will be resized to: " + this.targetWidth + "px/" + this.targetHeight + "px");
+            }
+
+            if (!this.showPreview) {
+                dojoClass.add(this.nodePreview, "hidden");
+            }
+            if (!this.showInfo) {
+                dojoClass.add(this.nodeData, "hidden");
+            }
+
+            if (!this.showPreview && !this.showInfo) {
+                dojoClass.replace(this.imageBox, "col-md-12", "col-md-9");
+                dojoClass.add(this.sideBar, "hidden");
+            }
+
             this._setupEvents();
         },
 
         update: function(obj, callback) {
             logger.debug(this.id + ".update");
-
             this._contextObj = obj;
+
             this._resetSubscriptions();
             this._updateRendering(callback);
         },
@@ -121,17 +165,23 @@ define([
                 } else {
                     dojoStyle.set(this.domNode, "display", "block");
 
-                    console.log(this._contextObj);
-
                     this._imageName = this._contextObj.get("Name");
                     domAttr.set(this.imageNode, "src", this._getFileUrl(this._contextObj.getGuid()));
 
                     $(this.imageNode).cropper("destroy");
-                    $(this.imageNode).cropper({
-                        //aspectRatio: 16 / 9,
+
+                    var cropperOptions = {
+                        viewMode: 1,
+                        dragMode: "move",
                         preview: "#" + this.id + " .img-preview",
                         crop: lang.hitch(this, this._onCrop)
-                    });
+                    };
+
+                    if (this._targetRatio !== null) {
+                        cropperOptions.aspectRatio = this._targetRatio;
+                    }
+
+                    $(this.imageNode).cropper(cropperOptions);
                 }
             } else {
                 dojoStyle.set(this.domNode, "display", "none");
@@ -141,56 +191,69 @@ define([
         },
 
         _onCrop: function (e) {
-            domAttr.set(this.nodeDataX, "value", Math.round(e.x));
-            domAttr.set(this.nodeDataY, "value", Math.round(e.y));
-            domAttr.set(this.nodeDataWidth, "value", Math.round(e.width));
-            domAttr.set(this.nodeDataHeight, "value", Math.round(e.height));
-            domAttr.set(this.nodeDataRotate, "value", e.rotate);
-            domAttr.set(this.nodeDataScaleX, "value", e.scaleX);
-            domAttr.set(this.nodeDataScaleY, "value", e.scaleY);
+            if (this.showInfo) {
+                domAttr.set(this.nodeDataX, "value", Math.round(e.x));
+                domAttr.set(this.nodeDataY, "value", Math.round(e.y));
+                domAttr.set(this.nodeDataWidth, "value", Math.round(e.width));
+                domAttr.set(this.nodeDataHeight, "value", Math.round(e.height));
+                domAttr.set(this.nodeDataRotate, "value", e.rotate);
+                domAttr.set(this.nodeDataScaleX, "value", e.scaleX);
+                domAttr.set(this.nodeDataScaleY, "value", e.scaleY);
+            }
         },
 
         save: function () {
             logger.debug(this.id + ".save");
-            var guid = this._contextObj.getGuid(),
-                canvas = $(this.imageNode).cropper("getCroppedCanvas");
 
-            if (canvas.toBlob) {
-                canvas.toBlob(lang.hitch(this, function (file) {
-                    var pid;
-                    file.fileName = this._imageName;
-                    console.log(file);
-                    var upload = new Upload({
-                        objectGuid: guid,
-                        maxFileSize: file.size,
-                        startUpload: function() {
-                            pid = window.mx.ui.showProgress();
-                        },
-                        finishUpload: function() {
-                            window.mx.ui.hideProgress(pid);
-                        },
-                        form: {
-                            mxdocument: {
-                                files: [
-                                    file
-                                ]
-                            }
-                        },
-                        callback: lang.hitch(this, function () {
-                            logger.debug(this.id + "._fileUploadRequest uploaded");
-                            this._updateRendering();
-                        }),
-                        error: lang.hitch(this, function (err) {
-                            console.error(this.id + "._fileUploadRequest error uploading", arguments);
-                            this._updateRendering();
-                        })
-                    });
-
-                    upload.upload();
-                }));
+            var canvas;
+            if (this.lockTargetRatio) {
+                canvas = $(this.imageNode).cropper("getCroppedCanvas", {
+                    width: this.targetWidth,
+                    height: this.targetHeight,
+                    fillColor: this.targetColor
+                });
             } else {
-                console.error(this.id + ".save failed, cannot create a blob");
+                canvas = $(this.imageNode).cropper("getCroppedCanvas");
             }
+
+            var guid = this._contextObj.getGuid(),
+                dataURI = canvas.toDataURL("image/jpeg"),
+                file = dataURLtoBlob && dataURLtoBlob(dataURI);
+
+            if (file) {
+                var pid;
+                file.fileName = this._imageName;
+
+                var upload = new Upload({
+                    objectGuid: guid,
+                    maxFileSize: file.size,
+                    startUpload: function() {
+                        pid = window.mx.ui.showProgress();
+                    },
+                    finishUpload: function() {
+                        window.mx.ui.hideProgress(pid);
+                    },
+                    form: {
+                        mxdocument: {
+                            files: [
+                                file
+                            ]
+                        }
+                    },
+                    callback: lang.hitch(this, function () {
+                        logger.debug(this.id + "._fileUploadRequest uploaded");
+                        this._updateRendering();
+                    }),
+                    error: lang.hitch(this, function (err) {
+                        console.error(this.id + "._fileUploadRequest error uploading", arguments);
+                        this._updateRendering();
+                    })
+                });
+
+                upload.upload();
+            }
+
+
         },
 
         _getFileUrl: function (guid) {

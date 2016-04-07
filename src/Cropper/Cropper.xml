@@ -4,10 +4,41 @@
     <description>The description of this widget.</description>
     <icon />
     <properties>
-        <property key="messageString" type="string" required="false" defaultValue="">
-            <caption>Message</caption>
+        <!--
+            EDITING
+        -->
+        <property key="targetWidth" type="integer" required="true" defaultValue="1000">
+            <caption>Target width</caption>
+            <category>Editing</category>
+            <description>Target width of the image in pixels</description>
+        </property>
+        <property key="targetHeight" type="integer" required="true" defaultValue="1000">
+            <caption>Target height</caption>
+            <category>Editing</category>
+            <description>Target height of the image in pixels</description>
+        </property>
+        <!-- <property key="targetColor" type="string" required="false" defaultValue="#FFFFFF">
+            <caption>Target background color</caption>
+            <category>Editing</category>
+            <description>Target background color (hex value). When you resize the image and the image is smaller than the cropping box, the areas that are not covered by this are colored with this color (because the output is a JPEG file). Default is white (#FFFFF)</description>
+        </property> -->
+        <property key="lockTargetRatio" type="boolean" required="true" defaultValue="false">
+            <caption>Lock width/height ratio</caption>
+            <category>Editing</category>
+            <description>If set to true, it will lock the aspect ratio of the cropping (so you cannot set change the shape of the cropping box), because the desired output will be resized to the target height and width.</description>
+        </property>
+        <!--
+            APPEARANCE
+        -->
+        <property key="showPreview" type="boolean" required="true" defaultValue="true">
+            <caption>Show preview</caption>
             <category>Appearance</category>
-            <description>The message visible within the widget.</description>
+            <description>Show previews of the image</description>
+        </property>
+        <property key="showInfo" type="boolean" required="true" defaultValue="true">
+            <caption>Show info</caption>
+            <category>Appearance</category>
+            <description>Show info on the cropped image</description>
         </property>
     </properties>
 </widget>

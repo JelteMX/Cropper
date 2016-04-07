@@ -94,7 +94,7 @@
         }
     }
     if (typeof define === 'function' && define.amd) {
-        define(function() {
+        define([], function() {
             return dataURLtoBlob
         })
     } else if (typeof module === 'object' && module.exports) {

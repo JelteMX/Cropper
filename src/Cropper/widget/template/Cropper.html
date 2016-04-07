@@ -1,12 +1,12 @@
 <div class="cropper-widget">
     <div class="container">
         <div class="row">
-            <div class="col-md-9">
+            <div class="col-md-9" data-dojo-attach-point="imageBox">
                 <div class="img-container">
                     <img data-dojo-attach-point="imageNode" />
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-3" data-dojo-attach-point="sideBar">
                 <!-- PREVIEW -->
                 <div class="docs-preview clearfix" data-dojo-attach-point="nodePreview">
                     <div class="img-preview preview-lg"></div>
@@ -35,6 +35,9 @@
                         <label class="input-group-addon" for="dataHeight">Height</label>
                         <input type="text" class="form-control" data-dojo-attach-point="nodeDataHeight" placeholder="height">
                         <span class="input-group-addon">px</span>
+                    </div>
+                    <div class="input-group input-group-sm hidden" data-dojo-attach-point="nodeInfoResize">
+                        <small data-dojo-attach-point="nodeInfoResizeText">Width/height will be resized to: </small>
                     </div>
                     <div class="input-group input-group-sm">
                         <label class="input-group-addon" for="dataRotate">Rotate</label>
@@ -439,7 +442,7 @@
             </div>
         </div> -->
         <div class="row">
-            <button type="button" class="btn btn-primary" title="Save" data-dojo-attach-point="saveButton">Save</button>
+            <button type="button" class="btn btn-primary" title="Save" data-dojo-attach-point="saveButton">Crop</button>
         </div>
     </div>
 </div>
