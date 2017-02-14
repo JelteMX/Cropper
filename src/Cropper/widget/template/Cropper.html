@@ -18,39 +18,39 @@
                 <div class="docs-data" data-dojo-attach-point="nodeData">
                     <div class="input-group input-group-sm">
                         <label class="input-group-addon" for="dataX">X</label>
-                        <input type="text" class="form-control" data-dojo-attach-point="nodeDataX" placeholder="x">
+                        <input type="text" class="form-control" disabled="true" data-dojo-attach-point="nodeDataX" placeholder="x">
                         <span class="input-group-addon">px</span>
                     </div>
                     <div class="input-group input-group-sm">
                         <label class="input-group-addon" for="dataY">Y</label>
-                        <input type="text" class="form-control" data-dojo-attach-point="nodeDataY" placeholder="y">
+                        <input type="text" class="form-control" disabled="true" data-dojo-attach-point="nodeDataY" placeholder="y">
                         <span class="input-group-addon">px</span>
                     </div>
                     <div class="input-group input-group-sm">
                         <label class="input-group-addon" for="dataWidth">Width</label>
-                        <input type="text" class="form-control" data-dojo-attach-point="nodeDataWidth" placeholder="width">
+                        <input type="text" class="form-control" disabled="true" data-dojo-attach-point="nodeDataWidth" placeholder="width">
                         <span class="input-group-addon">px</span>
                     </div>
                     <div class="input-group input-group-sm">
                         <label class="input-group-addon" for="dataHeight">Height</label>
-                        <input type="text" class="form-control" data-dojo-attach-point="nodeDataHeight" placeholder="height">
+                        <input type="text" class="form-control" disabled="true" data-dojo-attach-point="nodeDataHeight" placeholder="height">
                         <span class="input-group-addon">px</span>
                     </div>
                     <div class="input-group input-group-sm hidden" data-dojo-attach-point="nodeInfoResize">
                         <small data-dojo-attach-point="nodeInfoResizeText">Width/height will be resized to: </small>
                     </div>
-                    <div class="input-group input-group-sm">
+                    <div class="input-group input-group-sm" data-dojo-attach-point="nodeInfoRotation">
                         <label class="input-group-addon" for="dataRotate">Rotate</label>
-                        <input type="text" class="form-control" data-dojo-attach-point="nodeDataRotate" placeholder="rotate">
+                        <input type="text" class="form-control" disabled="true" data-dojo-attach-point="nodeDataRotate" placeholder="rotate">
                         <span class="input-group-addon">deg</span>
                     </div>
-                    <div class="input-group input-group-sm">
+                    <div class="input-group input-group-sm" data-dojo-attach-point="nodeInfoScaleX">
                         <label class="input-group-addon" for="dataScaleX">ScaleX</label>
-                        <input type="text" class="form-control" data-dojo-attach-point="nodeDataScaleX" placeholder="scaleX">
+                        <input type="text" class="form-control" disabled="true" data-dojo-attach-point="nodeDataScaleX" placeholder="scaleX">
                     </div>
-                    <div class="input-group input-group-sm">
+                    <div class="input-group input-group-sm" data-dojo-attach-point="nodeInfoScaleY">
                         <label class="input-group-addon" for="dataScaleY">ScaleY</label>
-                        <input type="text" class="form-control" data-dojo-attach-point="nodeDataScaleY" placeholder="scaleY">
+                        <input type="text" class="form-control" disabled="true" data-dojo-attach-point="nodeDataScaleY" placeholder="scaleY">
                     </div>
                 </div>
             </div>
@@ -107,31 +107,7 @@
                     </button>
                 </div>
 
-                <div class="btn-group">
-                    <button type="button" class="btn btn-primary" data-method="rotate" data-option="-45" title="Rotate Left">
-                        <span class="docs-tooltip" data-toggle="tooltip" title="$().cropper(&quot;rotate&quot;, -45)">
-                            <span class="fa fa-rotate-left"></span>
-                        </span>
-                    </button>
-                    <button type="button" class="btn btn-primary" data-method="rotate" data-option="45" title="Rotate Right">
-                        <span class="docs-tooltip" data-toggle="tooltip" title="$().cropper(&quot;rotate&quot;, 45)">
-                            <span class="fa fa-rotate-right"></span>
-                        </span>
-                    </button>
-                </div>
 
-                <div class="btn-group">
-                    <button type="button" class="btn btn-primary" data-method="scaleX" data-option="-1" title="Flip Horizontal">
-                        <span class="docs-tooltip" data-toggle="tooltip" title="$().cropper(&quot;scaleX&quot;, -1)">
-                            <span class="fa fa-arrows-h"></span>
-                        </span>
-                    </button>
-                    <button type="button" class="btn btn-primary" data-method="scaleY" data-option="-1" title="Flip Vertical">
-                        <span class="docs-tooltip" data-toggle="tooltip" title="$().cropper(&quot;scaleY&quot;, -1)">
-                            <span class="fa fa-arrows-v"></span>
-                        </span>
-                    </button>
-                </div>
 
                 <div class="btn-group">
                     <button type="button" class="btn btn-primary" data-method="crop" title="Crop">
@@ -442,7 +418,28 @@
             </div>
         </div> -->
         <div class="row">
-            <button type="button" class="btn btn-primary" title="Save" data-dojo-attach-point="saveButton">Crop</button>
+            <!-- SAVE BUTTON -->
+            <div class="btn-group">
+                <button type="button" class="btn btn-primary" title="Save" data-dojo-attach-point="saveButton">Crop</button>
+            </div>
+            <!-- ROTATION -->
+            <div class="btn-group" data-dojo-attach-point="rotateButtons">
+                <button type="button" class="btn btn-primary" data-dojo-attach-point="rotateButtonLeft">
+                    <i class="glyphicon glyphicon-triangle-left"></i>
+                </button>
+                <button type="button" class="btn btn-primary" data-dojo-attach-point="rotateButtonRight">
+                    <i class="glyphicon glyphicon-triangle-right"></i>
+                </button>
+            </div>
+            <!-- FLIPPING -->
+            <div class="btn-group" data-dojo-attach-point="flipButtons">
+                <button type="button" class="btn btn-primary" data-dojo-attach-point="flipButtonVertical">
+                    <i class="glyphicon glyphicon-resize-vertical"></i>
+                </button>
+                <button type="button" class="btn btn-primary" data-dojo-attach-point="flipButtonHorizontal">
+                    <i class="glyphicon glyphicon-resize-horizontal"></i>
+                </button>
+            </div>
         </div>
     </div>
 </div>

@@ -2,7 +2,7 @@
 <widget id="Cropper.widget.Cropper" needsEntityContext="true" xmlns="http://www.mendix.com/widget/1.0/">
     <name>Cropper</name>
     <description>The description of this widget.</description>
-    <icon />
+    <icon/>
     <properties>
         <!--
             EDITING
@@ -39,6 +39,36 @@
             <caption>Show info</caption>
             <category>Appearance</category>
             <description>Show info on the cropped image</description>
+        </property>
+        <!--
+            BEHAVIOR
+        -->
+        <property key="afterSaveMf" type="microflow" required="false">
+            <caption>After Save Microflow</caption>
+            <category>Behavior</category>
+            <description>Microflow to be triggered after clicking the Save button</description>
+            <returnType type="Void"/>
+        </property>
+        <!--
+            ROTATION
+        -->
+        <property key="enableRotation" type="boolean" defaultValue="false">
+            <caption>Rotation</caption>
+            <category>Rotation</category>
+            <description>Enable/disable rotation of an image.</description>
+        </property>
+        <property key="rotationIncrement" type="integer" required="true" defaultValue="5">
+            <caption>Rotation degrees</caption>
+            <category>Rotation</category>
+            <description>Degrees rotation per step. Every time the user clicks the rotation button, it will increment/decrement with a certain amount of degrees.</description>
+        </property>
+        <!--
+            FLIP
+        -->
+        <property key="enableFlipping" type="boolean" defaultValue="false">
+            <caption>Flipping</caption>
+            <category>Flip</category>
+            <description>Enable/disable flipping of an image. This means you can flip it horizontal or vertical</description>
         </property>
     </properties>
 </widget>
