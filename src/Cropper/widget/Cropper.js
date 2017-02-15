@@ -63,7 +63,9 @@ define([
         saveButton: null,
 
         // Internal variables. Non-primitives created in the prototype are shared between all widget instances.
-        _handles: null,
+        _history: null,
+        _state: 0,
+
         _contextObj: null,
         _setup: false,
         _imageName: null,
@@ -76,11 +78,13 @@ define([
         _targetRatio: null,
 
         constructor: function() {
-            this._handles = [];
+
         },
 
         postCreate: function() {
             logger.debug(this.id + ".postCreate");
+
+            this._history = [];
 
             if (this.targetColor === "" || this.targetColor.indexOf("#") !== 0) {
                 this.targetColor = "#FFFFFF";
@@ -126,6 +130,9 @@ define([
             logger.debug(this.id + ".update");
             this._contextObj = obj;
 
+            this._history = [];
+            this._changeState(0);
+
             this._resetSubscriptions();
             this._updateRendering(callback);
         },
@@ -150,7 +157,14 @@ define([
         _setupEvents: function() {
             logger.debug(this.id + "._setupEvents");
 
-            this.connect(this.saveButton, "click", lang.hitch(this, this.save));
+            this.connect(this.saveButton, "click", lang.hitch(this, this._save));
+            this.connect(this.historyButtonBack, "click", lang.hitch(this, this._revert));
+
+            this.connect(this.cropperButtonReset, "click", lang.hitch(this, function () {
+                if (this._cropper) {
+                    this._cropper.reset();
+                }
+            }));
 
             if (this.enableRotation) {
                 this.connect(this.rotateButtonLeft, "click", lang.hitch(this, this._rotate, 0 - this.rotationIncrement));
@@ -183,7 +197,6 @@ define([
                 this._scaleX *= -1;
             }
 
-            console.log(this._scaleX, this._scaleY)
             if (this._cropper !== null) {
                 this._cropper.scale(this._scaleX, this._scaleY);
             }
@@ -227,6 +240,21 @@ define([
                         preview: "#" + this.id + " .img-preview",
                         crop: lang.hitch(this, this._onCrop),
                         ready: lang.hitch(this, function () {
+                            if (this._setup === false) {
+                                this._setup = true;
+
+                                var canvas = this._getCanvas(),
+                                    guid = this._contextObj.getGuid(),
+                                    file = this._getDataFromCanvas(canvas);
+
+                                if (file) {
+                                    this._history.push({
+                                        guid: guid,
+                                        file: file
+                                    });
+                                    this._changeState(0);
+                                }
+                            }
                             this._executeCallback(callback, "_updateRendering cropper ready");
                         })
                     };
@@ -255,32 +283,95 @@ define([
             }
         },
 
-        save: function() {
-            logger.debug(this.id + ".save");
-
-            var canvas = this._cropper.getCroppedCanvas(this.lockTargetRatio ? {
-                    width: this.targetWidth,
-                    height: this.targetHeight,
-                    fillColor: this.targetColor
-                } : {});
-            var guid = this._contextObj.getGuid(),
-                dataURI = canvas.toDataURL("image/jpeg"),
+        _getDataFromCanvas: function (canvas) {
+            if (!canvas) {
+                return false;
+            }
+            var dataURI = canvas.toDataURL("image/jpeg"),
                 file = dataURLtoBlob && dataURLtoBlob(dataURI);
 
-            if (file) {
-                mx.data.saveDocument(guid, this._imageName, {}, file,
-                    lang.hitch(this, function() {
-                        if (this.afterSaveMf) {
-                            this._execMf(this.afterSaveMf, guid, lang.hitch(this, this._updateRendering));
-                        } else {
-                            this._updateRendering();
-                        }
-                    }),
-                    lang.hitch(this, function(e) {
-                        // Error callback!
+            return file || false;
+        },
+
+        _getCanvas: function () {
+            return this._cropper.getCroppedCanvas(this.lockTargetRatio ? {
+                width: this.targetWidth,
+                height: this.targetHeight,
+                fillColor: this.targetColor
+            } : {});
+        },
+
+        _changeState: function (inc) {
+            this._state += inc;
+            logger.debug(this.id + "._changeState: " + this._state);
+            if (this._state === 0) {
+                domAttr.set(this.historyButtonBack, "disabled", "disabled");
+            } else {
+                domAttr.remove(this.historyButtonBack, "disabled");
+            }
+        },
+
+        _save: function() {
+            logger.debug(this.id + ".save");
+
+            var canvas = this._getCanvas(),
+                guid = this._contextObj.getGuid(),
+                file = this._getDataFromCanvas(canvas);
+
+            this._saveDocument(guid, this._imageName, file,
+                lang.hitch(this, function() {
+                    this._history.push({
+                        guid: guid,
+                        file: file
+                    });
+                    this._changeState(1);
+
+                    if (this.afterSaveMf) {
+                        this._execMf(this.afterSaveMf, guid, lang.hitch(this, this._updateRendering));
+                    } else {
                         this._updateRendering();
-                    })
-                );
+                    }
+                }),
+                lang.hitch(this, function(e) {
+                    console.error(e);
+                    // Error callback!
+                    this._updateRendering();
+                })
+            );
+        },
+
+        _revert: function () {
+            logger.debug(this.id + "._revert, history length: " + this._history.length + ", current state: " + this._state);
+            var historyFile;
+            if (this._history.length > 1) {
+                this._history.pop();
+                this._changeState(-1);
+                historyFile = this._history[this._state];
+            } else {
+                historyFile = this._history[0];
+            }
+            var guid = this._contextObj.getGuid();
+
+            this._saveDocument(guid, this._imageName, historyFile.file,
+                lang.hitch(this, function () {
+                    if (this.afterSaveMf) {
+                        this._execMf(this.afterSaveMf, guid, lang.hitch(this, this._updateRendering));
+                    } else {
+                        this._updateRendering();
+                    }
+                }),
+                lang.hitch(this, function (e) {
+                    console.error(e);
+                    // Error callback!
+                    this._updateRendering();
+                })
+            );
+        },
+
+        _saveDocument: function(guid, name, file, succesCB, errorCB) {
+            logger.debug(this.id + "._saveDocument");
+            if (file) {
+                mx.data.saveDocument(guid, name, {}, file, lang.hitch(this, this._executeCallback, succesCB, "_saveDocument success cb"), lang.hitch(this, this._executeCallback, errorCB, "_saveDocument error cb"));
             } else {
                 console.warn(this.id + ".save error: no file!");
             }

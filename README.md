@@ -9,7 +9,17 @@ It needs an context entity object that is a generalization of 'System.Image' to 
 TODO:
 
 * Add more options that can be done in CropperJS
-* Add history (go back/forward), save files in memory
+
+## Browser support
+
+(copied from [Cropper.js](https://github.com/fengyuanchen/cropperjs#browser-support))
+
+ * Chrome (latest)
+ * Firefox (latest)
+ * Safari (latest)
+ * Opera (latest)
+ * Edge (latest)
+ * Internet Explorer 9+
 
 ## Contributing
 
